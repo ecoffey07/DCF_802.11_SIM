@@ -13,12 +13,14 @@ set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/manager.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/receiver.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/sender.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/src/medium.cpp
 )
 
-set(HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/receiver.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/include/manager.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/include/receiver.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/include/sender.h
+set(HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/receiver.hpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/include/manager.hpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/include/receiver.hpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/include/sender.hpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/include/medium.hpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
