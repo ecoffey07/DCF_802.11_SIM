@@ -33,6 +33,7 @@ class Sender {
     void sendFrameToBuffer();
     void setVCS(bool vcs);
     void setState(int state);
+    void reset();
 
     bool getReadyForClearance();
     bool frameSuccess() {return sentFrame;};

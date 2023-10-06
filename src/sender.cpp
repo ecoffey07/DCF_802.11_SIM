@@ -26,6 +26,7 @@ Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int d
   contentionWindowMinSize = cwMin;
   contentionWindowMaxSize = cwMax;
   contentionWindowSize = cwMin;
+  framesInBuffer = 0;
 
   mediumBusy = false;
   vcsEnabled = false;
@@ -85,7 +86,7 @@ void Sender::Tick() {
   case SenderStates::CONTENTION:
     // Countdown from backoff counter, if backoff counter = 0, move to SEND
     // If medium is busy, move to DEFER
-    std::cout << "BACKOFF: " << backOffCount << std::endl;
+    // std::cout << "BACKOFF: " << backOffCount << std::endl;
     if (mediumBusy) {
       if (vcsEnabled) {
         rtsCount = 1 + ctsSlots + 1 + 4;
@@ -275,7 +276,7 @@ void Sender::setAck(bool ack) {
 
 void Sender::sendFrameToBuffer() {
   framesInBuffer++;
-  std::cout << "ADD FRAMES IN BUFFER: " << framesInBuffer << std::endl;
+  // std::cout << "ADD FRAMES IN BUFFER: " << framesInBuffer << std::endl;
 }
 
 int Sender::getState() {
@@ -300,4 +301,26 @@ bool Sender::getReadyForClearance() {
 
 void Sender::setState(int state) {
   currentState = (SenderStates)state;
+}
+
+void Sender::reset() {
+  framesInBuffer = 0;
+  currentState = SenderStates::DIFS;
+  DIFSCount = this->DIFSSlots;
+  SIFSCount = this->SIFSSlots;
+  dataCount = this->dataSlots;
+  ackCount = this->ackSlots;
+  rtsCount = this->rtsSlots;
+
+  contentionWindowSize = contentionWindowMinSize;
+
+  mediumBusy = false;
+  vcsEnabled = false;
+  readyForClearance = false;
+  sentFrame = false;
+
+  std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
+  std::random_device rd;
+  std::default_random_engine generator(rd());
+  backOffCount = distribution(generator); 
 }
