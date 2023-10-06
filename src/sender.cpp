@@ -4,21 +4,33 @@
 #include "sender.hpp"
 
 
-Sender::Sender(int DIFSSlots, int SIFSSlots, int ackSlots, int dataSlots, int cwMin, int cwMax) {
+Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int dataSlots, int cwMin, int cwMax) {
   currentCSState = SenderCSStates::DIFS;
   currentState = SenderStates::DIFS;
 
-  this->DIFSSlots = DIFSSlots;
-  this->SIFSSlots = SIFSSlots;
-  this->ackSlots = ackSlots;
+  this->ID = ID;
 
-  DIFSCount = DIFSSlots;
-  SIFSCount = SIFSSlots;
-  ackCount = ackSlots;
+  // We subtract one because I'm too lazy to fix the code
+  this->DIFSSlots = DIFSSlots - 1;
+  this->SIFSSlots = SIFSSlots - 1;
+  this->ackSlots = ackSlots - 1;
+  this->dataSlots = dataSlots - 1;
+
+  DIFSCount = this->DIFSSlots;
+  SIFSCount = this->SIFSSlots;
+  ackCount = this->ackSlots;
+  dataCount = this->dataSlots;
 
   cwMin = cwMin;
   cwMax = cwMax;
   contentionWindowSize = cwMin;
+
+  mediumBusy = false;
+
+  std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
+  std::random_device rd;
+  std::default_random_engine generator(rd());
+  backOffCount = distribution(generator); 
 }
 
 void Sender::TickWithCS() {
@@ -35,7 +47,7 @@ void Sender::TickWithCS() {
 
   case SenderCSStates::SEND:
     break;
-
+ 
   case SenderCSStates::WAIT_FOR_ACK:
     break;
 
@@ -68,8 +80,8 @@ void Sender::Tick() {
   case SenderStates::CONTENTION:
     // Countdown from backoff counter, if backoff counter = 0, move to SEND
     // If medium is busy, move to DEFER
-    
     if (mediumBusy) {
+      mediumBusy = false;
       currentState = SenderStates::DEFER;
     }
     
@@ -84,9 +96,12 @@ void Sender::Tick() {
   case SenderStates::SEND:
     // Send data frame, one slot at a time, if remaining data = 0, move to SIFS
     if (dataCount == 0) {
+      dataCount = dataSlots;
       currentState = SenderStates::SIFS;
     }
-    dataCount--;
+    else {
+      dataCount--;
+    }
     break;
 
   case SenderStates::WAIT_FOR_ACK:
@@ -98,33 +113,65 @@ void Sender::Tick() {
       if (ackReceived) {
         // Reset contention window max size, pick new backOff
         ackReceived = false;
+        --framesInBuffer;
+        contentionWindowSize = contentionWindowMinSize;
+
+        std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+        backOffCount = distribution(generator);
+
+        currentState = SenderStates::DIFS;
       }
       else {
         // No ack, double contention window, go back to DIFS
+        contentionWindowSize *= 2;
+        if (contentionWindowSize > contentionWindowMaxSize) {
+          contentionWindowSize = contentionWindowMaxSize;
+        }
+        std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+        backOffCount = distribution(generator);
+
+        currentState = SenderStates::DIFS;
       }
+      ackCount = ackSlots;
+    }
+    else {
+      --ackCount;
     }
     break;
 
   case SenderStates::SIFS:
     // Wait SIFS amount of slots, move to WAIT_FOR_ACK
     if (SIFSCount == 0) {
+      SIFSCount = SIFSSlots;
       currentState = SenderStates::WAIT_FOR_ACK;
     }
-    SIFSCount--;
+    else {
+      SIFSCount--;
+    }
     break;
 
   case SenderStates::DIFS:
     // Wait DIFS amount of slots, move to Contention if something to send
     if (DIFSCount == 0) {
       DIFSCount = DIFSSlots;
-      std::uniform_int_distribution<int> distrub(0, contentionWindowSize - 1);
-      std::cout << distrub(engine) << std::endl;
+      
       if (framesInBuffer > 0) {
         currentState = SenderStates::CONTENTION;
       }
       std::cout << "DIFS SYNC" << std::endl;
     }
-    DIFSCount--;
+    else {
+      DIFSCount--;
+    }
+    if (mediumBusy) {
+      dataCount = dataSlots + 1; // +1 to fix off by one error
+      mediumBusy = false;
+      currentState = SenderStates::DEFER;
+    }
     break;
 
   case SenderStates::DEFER:
@@ -135,13 +182,22 @@ void Sender::Tick() {
           dataCount = dataSlots;
           SIFSCount = SIFSSlots;
           ackCount = ackSlots;
+          mediumBusy = false;
+          DIFSCount = DIFSSlots;
           currentState = SenderStates::DIFS;
         }
-        ackCount--;
+        else {
+          ackCount--;
+        }
       }
-      SIFSCount--;
+      else {
+        SIFSCount--;
+      }
     }
-    dataCount--;
+    else {
+      dataCount--;
+    }
+
     break;
 
   default:
@@ -149,11 +205,18 @@ void Sender::Tick() {
   }
 }
 
-void Sender::TrigAck() {
+void Sender::setAck(bool ack) {
+  ackReceived = ack;
+}
 
-
+void Sender::sendFrameToBuffer() {
+  framesInBuffer++;
 }
 
 int Sender::getState() {
   return (int)currentState;
+}
+
+void Sender::setMediumBusy(bool busy) {
+  mediumBusy = busy;
 }

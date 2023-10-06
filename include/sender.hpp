@@ -8,8 +8,8 @@ class Sender;
 
 enum class SenderCSStates {
   CONTENTION,
+  SEND = 1,
   REQUEST_TO_SEND,
-  SEND,
   WAIT_FOR_ACK,
   SIFS,
   DIFS,
@@ -18,7 +18,7 @@ enum class SenderCSStates {
 
 enum class SenderStates {
   CONTENTION,
-  SEND,
+  SEND = 1,
   WAIT_FOR_ACK,
   SIFS,
   DIFS,
@@ -28,24 +28,27 @@ enum class SenderStates {
 class Sender {
 
   public:
-    Sender(int DIFSSlots, int SIFSSlots, int ackSlots, int dataSlots, int cwMin, int cwMax);
+    Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int dataSlots, int cwMin, int cwMax);
 
     /**
      * Use Carrier Sensing
     */
     void TickWithCS();
-
     void Tick();
-    void TrigAck();
+
+    void setMediumBusy(bool busy);
+    void setAck(bool ack);
+    void sendFrameToBuffer();
 
     int getState();
 
+    
   private:
     
     SenderCSStates currentCSState;
     SenderStates currentState;
 
-    std::default_random_engine engine;
+    std::string ID;
 
     bool mediumBusy;
     bool ackReceived;
