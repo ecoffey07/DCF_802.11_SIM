@@ -32,8 +32,10 @@ class Sender {
     void setClearToSend(bool clear);
     void sendFrameToBuffer();
     void setVCS(bool vcs);
+    void setState(int state);
 
     bool getReadyForClearance();
+    bool frameSuccess() {return sentFrame;};
     int getState();
 
     void setdataCount(int dataCount) { this->dataCount = dataCount; };
@@ -51,6 +53,7 @@ class Sender {
     bool ackReceived;
     bool clearToSend;
     bool readyForClearance;
+    bool sentFrame;
 
     bool vcsEnabled;
 

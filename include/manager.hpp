@@ -19,7 +19,7 @@ struct Params {
   int sim_time; // seconds
 };
 
-const int TICK_TIME = 1; // us between simulated ticks
+const int TICK_TIME = 1000; // us between simulated ticks
 
 class Manager {
   public:

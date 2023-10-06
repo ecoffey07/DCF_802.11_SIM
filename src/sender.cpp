@@ -30,6 +30,7 @@ Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int d
   mediumBusy = false;
   vcsEnabled = false;
   readyForClearance = false;
+  sentFrame = false;
 
   std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
   std::random_device rd;
@@ -84,6 +85,7 @@ void Sender::Tick() {
   case SenderStates::CONTENTION:
     // Countdown from backoff counter, if backoff counter = 0, move to SEND
     // If medium is busy, move to DEFER
+    std::cout << "BACKOFF: " << backOffCount << std::endl;
     if (mediumBusy) {
       if (vcsEnabled) {
         rtsCount = 1 + ctsSlots + 1 + 4;
@@ -101,7 +103,7 @@ void Sender::Tick() {
         currentState = SenderStates::SEND;
       }
     }
-    else {
+    else if (backOffCount > 0){
       backOffCount--;
     }
     break;
@@ -127,7 +129,9 @@ void Sender::Tick() {
       if (ackReceived) {
         // Reset contention window max size, pick new backOff
         ackReceived = false;
+        sentFrame = true;
         --framesInBuffer;
+        // std::cout << "SUB FRAMES IN BUFFER: " << framesInBuffer << std::endl;
         contentionWindowSize = contentionWindowMinSize;
 
         std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
@@ -158,7 +162,7 @@ void Sender::Tick() {
     
     // ReadyForClearance only used in Topography B part 2
     if (rtsCount == 1) {
-      std::cout << ID << " READY FOR CLEARANCE" << std::endl;
+      // std::cout << ID << " READY FOR CLEARANCE" << std::endl;
       readyForClearance = true;
     }
     if (rtsCount == 0) {
@@ -200,13 +204,14 @@ void Sender::Tick() {
 
   case SenderStates::DIFS:
     // Wait DIFS amount of slots, move to Contention if something to send
+    sentFrame = false;
     if (DIFSCount == 0) {
       DIFSCount = DIFSSlots;
       
       if (framesInBuffer > 0) {
         currentState = SenderStates::CONTENTION;
       }
-      std::cout << "DIFS SYNC" << std::endl;
+      // std::cout << "DIFS SYNC" << std::endl;
     }
     else {
       DIFSCount--;
@@ -226,37 +231,37 @@ void Sender::Tick() {
     // Wait defer length, then wait for sifs, then wait ack length
     // If carrier sensing enabled, wait SIFS x2 + CTS + the rest of it
     mediumBusy = false;
-    
+
+    // Wait for manager to pull us out of the DEFER state
+
     // std::cout << ID << " " << rtsCount << " " << dataCount << " " << SIFSCount << " " << ackCount << std::endl;
     // rtsCount includes SIFS, CTS, SIFS
-    if (rtsCount == 0) {
-      if (dataCount == 0) {
-        if (SIFSCount == 0) {
-          if (ackCount == 0) {
-            dataCount = dataSlots;
-            SIFSCount = SIFSSlots;
-            ackCount = ackSlots;
-            mediumBusy = false;
-            DIFSCount = DIFSSlots;
-            currentState = SenderStates::DIFS;
-          }
-          else {
-            ackCount--;
-          }
-        }
-        else {
-          SIFSCount--;
-        }
-      }
-      else {
-        dataCount--;
-      }
-    }
-    else {
-      --rtsCount;
-    }
-
-
+    // if (rtsCount == 0) {
+    //   if (dataCount == 0) {
+    //     if (SIFSCount == 0) {
+    //       if (ackCount == 0) {
+    //         dataCount = dataSlots;
+    //         SIFSCount = SIFSSlots;
+    //         ackCount = ackSlots;
+    //         mediumBusy = false;
+    //         DIFSCount = DIFSSlots;
+    //         currentState = SenderStates::DIFS;
+    //       }
+    //       else {
+    //         ackCount--;
+    //       }
+    //     }
+    //     else {
+    //       SIFSCount--;
+    //     }
+    //   }
+    //   else {
+    //     dataCount--;
+    //   }
+    // }
+    // else {
+    //   --rtsCount;
+    // }
     break;
 
   default:
@@ -270,6 +275,7 @@ void Sender::setAck(bool ack) {
 
 void Sender::sendFrameToBuffer() {
   framesInBuffer++;
+  std::cout << "ADD FRAMES IN BUFFER: " << framesInBuffer << std::endl;
 }
 
 int Sender::getState() {
@@ -290,4 +296,8 @@ void Sender::setClearToSend(bool clear) {
 
 bool Sender::getReadyForClearance() {
   return readyForClearance;
+}
+
+void Sender::setState(int state) {
+  currentState = (SenderStates)state;
 }
