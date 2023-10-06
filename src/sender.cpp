@@ -85,10 +85,10 @@ void Sender::Tick() {
     // Countdown from backoff counter, if backoff counter = 0, move to SEND
     // If medium is busy, move to DEFER
     if (mediumBusy) {
-      mediumBusy = false;
       if (vcsEnabled) {
         rtsCount = 1 + ctsSlots + 1 + 4;
       }
+      dataCount = dataSlots + 1;
       currentState = SenderStates::DEFER;
     }
     
@@ -108,6 +108,7 @@ void Sender::Tick() {
 
   case SenderStates::SEND:
     // Send data frame, one slot at a time, if remaining data = 0, move to SIFS
+    // std::cout << ID << " " << dataCount << std::endl;
     if (dataCount == 0) {
       dataCount = dataSlots;
       currentState = SenderStates::SIFS;
@@ -224,8 +225,9 @@ void Sender::Tick() {
   case SenderStates::DEFER:
     // Wait defer length, then wait for sifs, then wait ack length
     // If carrier sensing enabled, wait SIFS x2 + CTS + the rest of it
+    mediumBusy = false;
     
-
+    // std::cout << ID << " " << rtsCount << " " << dataCount << " " << SIFSCount << " " << ackCount << std::endl;
     // rtsCount includes SIFS, CTS, SIFS
     if (rtsCount == 0) {
       if (dataCount == 0) {

@@ -1,9 +1,9 @@
 
 #define TESTING
-// #define TOP1A
+#define TOP1A
 // #define TOP1B
 // #define TOP2A
-#define TOP2B
+// #define TOP2B
 
 
 #include "manager.hpp"
@@ -33,8 +33,6 @@ std::string convert(int state, bool cw);
 
 Manager::Manager(Params params) {
   simParams = params;
-  totalSimTime = 0.0;
-  totalSlots = 0;
   maxSlots = simParams.sim_time / (simParams.slot_duration * pow(10, -6));
   int dataSlots = ceil(simParams.frame_size * 8 * pow(10,6) / simParams.bandwidth / 1024 / 1024 / 10);
   std::cout << "Data Slots: " << dataSlots << std::endl;
@@ -48,117 +46,150 @@ Manager::Manager(Params params) {
 
 void Manager::start() {
 
-  // Generate Poisson Traffic
-  int totalFrames = simParams.lambda * simParams.sim_time;
+  
+  
   
   // Using algorithm given in Appendix 1
-  std::default_random_engine gen; 
   std::uniform_int_distribution<int> distribution(1,99);
-  gen.seed(500);
-  std::queue<int> senderA_frames;
-  std::queue<int> senderB_frames;
-  int ya = 0;
-  int yb = 0;
-  for (int i = 0; i < totalFrames; ++i) {
-    // generate random frames for Sender A
-    double randNum = distribution(gen) / 100.0;
-    double x = -1 * log(1 - randNum) / simParams.lambda / (simParams.slot_duration * pow(10, -6));
-    ya += ceil(x);
-    senderA_frames.push(ya);
+  std::random_device rd;
+  std::default_random_engine generator(rd());
+  std::vector<std::vector<int>> senderA_frames;
+  std::vector<std::vector<int>> senderB_frames;
 
-    // generate random frames for Sender B
-    randNum = distribution(gen) / 100.0;
-    x = -1 * log(1 - randNum) / simParams.lambda / (simParams.slot_duration * pow(10, -6));
-    yb += ceil(x);
-    senderB_frames.push(yb);
+  std::vector<int> lambda_vector = {100,200,300,500,800,1000};
+  
+  // Generate Poisson Traffic
+  for (unsigned int i = 0; i < lambda_vector.size(); i++) {
+    std::vector<int> tempA;
+    std::vector<int> tempB;
+    int ya = 0;
+    int yb = 0;
+    int totalFrames = lambda_vector[i] * simParams.sim_time;
+    for (int k = 0; k < totalFrames; k++) {
+      double randNum = distribution(generator) / 100.0;
+      double x = -1 * log(1 - randNum) / lambda_vector[i] / (simParams.slot_duration * pow(10, -6));
+      ya += ceil(x);
+      tempA.push_back(ya);
+    }
+    for (int k = 0; k < totalFrames; k++) {
+      double randNum = distribution(generator) / 100.0;
+      double x = -1 * log(1 - randNum) / lambda_vector[i] / (simParams.slot_duration * pow(10, -6));
+      yb += ceil(x);
+      tempB.push_back(ya);
+    }
+    senderA_frames.push_back(tempA);
+    senderB_frames.push_back(tempB);
   }
-  // End algorithm
-  std::queue<int> testingA({10,15,20});
-  std::queue<int> testingB({5,10,15,20});
 
+  // End algorithm
+  std::vector<int> testingA{10,15,20};
+  std::vector<int> testingB{5,10,15,20};
 
 #ifdef TESTING
-  senderA_frames = testingA;
-  senderB_frames = testingB;
+  senderA_frames[0] = testingA;
+  senderB_frames[0] = testingB;
 #endif
 
-  int nextAFrame = senderA_frames.front();
-  senderA_frames.pop();
-  int nextBFrame = senderB_frames.front();
-  senderB_frames.pop();
+//   int nextAFrame = senderA_frames.front();
+//   senderA_frames.pop();
+//   int nextBFrame = senderB_frames.front();
+//   senderB_frames.pop();
 
   // Performance Metric Variables
-  int numCollisions = 0;
-  int sentFramesA = 0;
-  int sentFramesB = 0;
-  double throughputA = 0; // Throughput = data amount transfered / time
-  double throughputB = 0;
+  // int numCollisions = 0;
+  // int sentFramesA = 0;
+  // int sentFramesB = 0;
+  // double throughputA = 0; // Throughput = data amount transfered / time
+  // double throughputB = 0;
 
 
   // int receiveFrameCount = 0;
   bool collision = false;
 
-
   // Run Topology 1, no carrier sensing
 #ifdef TOP1A
+  double totalSimTime = 0.0;
+  int totalSlots = 0;
   senderA->setVCS(false);
   senderB->setVCS(false);
-  while (true) {
+  for (unsigned int i = 0; i < lambda_vector.size(); ++i) {
+    totalSimTime = 0.0;
+    totalSlots = 0;
+    int AFrameCount = 0;
+    int BFrameCount = 0;
+    int nextAFrame;
+    int nextBFrame;
+    nextAFrame = senderA_frames[i][AFrameCount];
+    nextBFrame = senderB_frames[i][BFrameCount];
+    AFrameCount++;
+    BFrameCount++;
+    while (true) {
+      // Break if end of Sim Time
+      if (totalSlots >= maxSlots) {
+        break;
+      }
+      // Check if Sender has something to send
+      if (nextAFrame == totalSlots) {
+        std::cout << "Sending Frame to Sender A Buffer" << std::endl;
+        nextAFrame = senderA_frames[i][AFrameCount];
+        AFrameCount++;
+        senderA->sendFrameToBuffer();
+      }
+      if (nextBFrame == totalSlots) {
+        std::cout << "Sending Frame to Sender B Buffer" << std::endl;
+        nextBFrame = senderB_frames[i][BFrameCount];
+        BFrameCount++;
+        senderB->sendFrameToBuffer();
+      }
 
-    // Break if end of Sim Time
-    if (totalSlots >= maxSlots) {
-      break;
-    }
+      if (senderA->getState() == 1 && senderB->getState() == 1) {
+        // Collision! Both senders are sending! Don't ACK
+        std::cout << "Collision!" << std::endl;
+        collision = true;
+        senderA->setAck(false);
+        senderB->setAck(false);
+      }
+      else if (senderA->getState() == 1 && senderB->getState() != 1) {
+        // No Collision, senderA sending
+        senderA->setAck(true);
+        senderB->setMediumBusy(true);
+      }
+      else if (senderA->getState() != 1 && senderB->getState() == 1) {
+        // No Collision, senderB sending
+        senderB->setAck(true);
+        senderA->setMediumBusy(true);
+      }
 
-    // Check if Sender has something to send
-    if (nextAFrame == totalSlots) {
-      std::cout << "Sending Frame to Sender A Buffer" << std::endl;
-      nextAFrame = senderA_frames.front();
-      senderA_frames.pop();
-      senderA->sendFrameToBuffer();
-    }
-    if (nextBFrame == totalSlots) {
-      std::cout << "Sending Frame to Sender B Buffer" << std::endl;
-      nextBFrame = senderB_frames.front();
-      senderB_frames.pop();
-      senderB->sendFrameToBuffer();
-    }
+      if (senderA->getState() != 1 && senderB->getState() != 1 && collision) {
+        // Collision happened, reset
+        collision = false;
+      }
 
-    if (senderA->getState() == 1 && senderB->getState() == 1) {
-      // Collision! Both senders are sending! Don't ACK
-      std::cout << "Collision!" << std::endl;
-      collision = true;
-      senderA->setAck(false);
-      senderB->setAck(false);
-    }
-    else if (senderA->getState() == 1 && senderB->getState() != 1) {
-      // No Collision, senderA sending
-      senderA->setAck(true);
-      senderB->setMediumBusy(true);
-    }
-    else if (senderB->getState() == 1 && senderA->getState() != 1) {
-      // No Collision, senderB sending
-      senderB->setAck(true);
-      senderA->setMediumBusy(true);
-    }
+      senderA->Tick();
+      senderB->Tick(); 
 
-
-    senderA->Tick();
-    senderB->Tick(); 
-
-    totalSlots += 1;
-    totalSimTime += simParams.slot_duration * pow(10, -6);
-    std::cout << "Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
-    // std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
+      totalSlots += 1;
+      totalSimTime += simParams.slot_duration * pow(10, -6);
+      std::cout << "TOP1A Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
+      // std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
+      getchar();
+    }
 #ifdef TESTING
-    getchar();
+      // getchar();
 #endif
+    std::cout << i << std::endl;
   }
 #endif
 
+  // getchar();
   // Run Topology 1 with carrier sensing
 #ifdef TOP1B
-
+  collision = false;
+  std::cout << "CORE" << std::endl;
+  senderA_frames = A_frames;
+  std::cout << "CORE" << std::endl;
+  senderB_frames = B_frames;
+  std::cout << "CORE" << std::endl;
   senderA->setVCS(true);
   senderB->setVCS(true);
   while (true) {
@@ -220,7 +251,7 @@ void Manager::start() {
 
     totalSlots += 1;
     totalSimTime += simParams.slot_duration * pow(10, -6);
-    std::cout << "Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
+    std::cout << "TOP1B Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
     std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
 #ifdef TESTING
     getchar();
@@ -228,8 +259,12 @@ void Manager::start() {
   }
 #endif
 
+// getchar();
 // Run Topology 2 no carrier sensing
 #ifdef TOP2A
+  collision = false;
+  senderA_frames = A_frames;
+  senderB_frames = B_frames;
   senderA->setVCS(false);
   senderB->setVCS(false);
   while (true) {
@@ -280,16 +315,19 @@ void Manager::start() {
 
     totalSlots += 1;
     totalSimTime += simParams.slot_duration * pow(10, -6);
-    std::cout << "Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
+    std::cout << "TOP2A Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
     std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
 #ifdef TESTING
     getchar();
 #endif
   }
 #endif
-
-#ifdef TOP2B
+  // getchar();
   // Run Topology 2 with carrier sensing
+#ifdef TOP2B
+  collision = false;
+  senderA_frames = A_frames;
+  senderB_frames = B_frames;
   senderA->setVCS(true);
   senderB->setVCS(true);
 
@@ -388,15 +426,13 @@ void Manager::start() {
 
     totalSlots += 1;
     totalSimTime += simParams.slot_duration * pow(10, -6);
-    std::cout << "Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
+    std::cout << "TOP2B Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
     std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
 #ifdef TESTING
     getchar();
 #endif
   }
 #endif
-
-
 
 }
 
