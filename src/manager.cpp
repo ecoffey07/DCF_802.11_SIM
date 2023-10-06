@@ -159,13 +159,13 @@ void Manager::start() {
       }
       // Check if Sender has something to send
       if (nextAFrame == totalSlots && AFrameCount <= TOP1A_A_Frames[i].size()) {
-        std::cout << "Sending Frame to Sender A Buffer" << std::endl;
+        // std::cout << "Sending Frame to Sender A Buffer" << std::endl;
         nextAFrame = TOP1A_A_Frames[i][AFrameCount];
         AFrameCount++;
         senderA->sendFrameToBuffer();
       }
       if (nextBFrame == totalSlots && BFrameCount <= TOP1A_B_Frames[i].size()) {
-        std::cout << "Sending Frame to Sender B Buffer" << std::endl;
+        // std::cout << "Sending Frame to Sender B Buffer" << std::endl;
         nextBFrame = TOP1A_B_Frames[i][BFrameCount];
         BFrameCount++;
         senderB->sendFrameToBuffer();
@@ -173,7 +173,7 @@ void Manager::start() {
 
       if (senderA->getState() == 1 && senderB->getState() == 1) {
         // Collision! Both senders are sending! Don't ACK
-        std::cout << "Collision!" << std::endl;
+        // std::cout << "Collision!" << std::endl;
         collision = true;
         senderA->setAck(false);
         senderB->setAck(false);
@@ -200,13 +200,13 @@ void Manager::start() {
       if (senderA->frameSuccess()) {
         SenderA_SuccessFrames++;
         AttemptedAFrames++;
-        std::cout << "ADDING A FRAME: " << SenderA_SuccessFrames << std::endl;
+        // std::cout << "ADDING A FRAME: " << SenderA_SuccessFrames << std::endl;
         senderB->setState(4);
       }
       if (senderB->frameSuccess()) {
         SenderB_SuccessFrames++;
         AttemptedBFrames++;
-        std::cout << "ADDING B FRAME: " << SenderB_SuccessFrames << std::endl;
+        // std::cout << "ADDING B FRAME: " << SenderB_SuccessFrames << std::endl;
         senderA->setState(4);
       }
 
@@ -219,16 +219,16 @@ void Manager::start() {
       // std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
       // getchar();
     }
-    std::cout << std::endl << std::endl << std::endl;
+    std::cout << std::endl;
     TOP1A_Collisions.push_back(collisionCount);
     TOP1A_Fairness.push_back( (double) AttemptedAFrames / (double) AttemptedBFrames);
-    std::cout << "TOP1A:" << std::endl << "SenderA sent frames: " << SenderA_SuccessFrames << " SenderB sent frames: " << SenderB_SuccessFrames << std::endl;
+    // std::cout << "TOP1A:" << std::endl << "SenderA sent frames: " << SenderA_SuccessFrames << " SenderB sent frames: " << SenderB_SuccessFrames << std::endl;
     double A_Kb = SenderA_SuccessFrames * simParams.frame_size * 8 / 1024.0; // Total Kilibits sent from A
     double B_Kb = SenderB_SuccessFrames * simParams.frame_size * 8 / 1024.0; // Total Kilibits sent from B
     TOP1A_SenderA_Throughput.push_back(A_Kb / simParams.sim_time);
     TOP1A_SenderB_Throughput.push_back(B_Kb / simParams.sim_time);
-    std::cout << "SenderA Throughput: " << TOP1A_SenderA_Throughput[i] << " SenderB Throughput: " << TOP1A_SenderB_Throughput[i] << std::endl;
-    std::cout << "Collisions: " << TOP1A_Collisions[i] << " Fairness: " << TOP1A_Fairness[i] << std::endl;
+    // std::cout << "SenderA Throughput: " << TOP1A_SenderA_Throughput[i] << " SenderB Throughput: " << TOP1A_SenderB_Throughput[i] << std::endl;
+    // std::cout << "Collisions: " << TOP1A_Collisions[i] << " Fairness: " << TOP1A_Fairness[i] << std::endl;
 #ifdef TESTING
       // getchar();
 #endif
@@ -358,7 +358,7 @@ void Manager::start() {
       // std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
 
     }
-    std::cout << std::endl << std::endl << std::endl;
+    std::cout << std::endl;
     TOP1B_Collisions.push_back(collisionCount);
     TOP1B_Fairness.push_back( (double) AttemptedAFrames / (double) AttemptedBFrames);
     // std::cout << "TOP1B:" << std::endl << "SenderA sent frames: " << SenderA_SuccessFrames << " SenderB sent frames: " << SenderB_SuccessFrames << std::endl;
@@ -477,7 +477,7 @@ void Manager::start() {
       // std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
 
     }
-    std::cout << std::endl << std::endl << std::endl;
+    std::cout << std::endl;
     TOP2A_Collisions.push_back(collisionCount);
     TOP2A_Fairness.push_back( (double) AttemptedAFrames / (double) AttemptedBFrames);
     // std::cout << "TOP2A:" << std::endl << "SenderA sent frames: " << SenderA_SuccessFrames << " SenderB sent frames: " << SenderB_SuccessFrames << std::endl;
@@ -614,7 +614,7 @@ void Manager::start() {
       // std::cout << "TOP2B Slot #: " << totalSlots << " SenderA Status: " << convert(senderA->getState(), true) << " | SenderB Status: " << convert(senderB->getState(), true) << std::endl;
       // std::this_thread::sleep_for(std::chrono::microseconds(TICK_TIME));
     }
-    std::cout << std::endl << std::endl << std::endl;
+    std::cout << std::endl;
     TOP2B_Collisions.push_back(collisionCount);
     TOP2B_Fairness.push_back( (double) AttemptedAFrames / (double) AttemptedBFrames);
     // std::cout << "TOP2B:" << std::endl << "SenderA sent frames: " << SenderA_SuccessFrames << " SenderB sent frames: " << SenderB_SuccessFrames << std::endl;
@@ -631,6 +631,28 @@ void Manager::start() {
   }
 #endif
 
+  // Graphing and stats:
+  plt::figure();
+  plt::plot(lambda_vector, TOP1A_SenderA_Throughput, {{"label", "DCF-topology(a)"}});
+  plt::plot(lambda_vector, TOP1B_SenderA_Throughput, {{"label", "DCF/VCS-topology(a)"}});
+  plt::plot(lambda_vector, TOP2A_SenderA_Throughput, {{"label", "DCF-topology(b)"}});
+  plt::plot(lambda_vector, TOP2B_SenderA_Throughput, {{"label", "DCF/VCS-topology(b)"}});
+  plt::legend("upper left");
+  plt::xlabel("λ (frames/sec)");
+  plt::ylabel("Throughput (Kbps)");
+  plt::title("Station A: Throughput vs. rate λ (frames/sec)");
+  
+  plt::figure();
+  plt::plot(lambda_vector, TOP1A_SenderB_Throughput, {{"label", "DCF-topology(a)"}});
+  plt::plot(lambda_vector, TOP1B_SenderB_Throughput, {{"label", "DCF/VCS-topology(a)"}});
+  plt::plot(lambda_vector, TOP2A_SenderB_Throughput, {{"label", "DCF-topology(b)"}});
+  plt::plot(lambda_vector, TOP2B_SenderB_Throughput, {{"label", "DCF/VCS-topology(b)"}});
+  plt::legend("upper left");
+  plt::xlabel("λ (frames/sec)");
+  plt::ylabel("Throughput (Kbps)");
+  plt::title("Station B: Throughput vs. rate λ (frames/sec)");
+
+  plt::show();
 }
 
 
