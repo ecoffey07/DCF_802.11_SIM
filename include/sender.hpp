@@ -6,23 +6,14 @@
 
 class Sender;
 
-enum class SenderCSStates {
-  CONTENTION,
-  SEND = 1,
-  REQUEST_TO_SEND,
-  WAIT_FOR_ACK,
-  SIFS,
-  DIFS,
-  DEFER
-};
-
 enum class SenderStates {
   CONTENTION,
   SEND = 1,
   WAIT_FOR_ACK,
   SIFS,
   DIFS,
-  DEFER
+  DEFER,
+  RTS
 };
 
 class Sender {
@@ -38,20 +29,30 @@ class Sender {
 
     void setMediumBusy(bool busy);
     void setAck(bool ack);
+    void setClearToSend(bool clear);
     void sendFrameToBuffer();
+    void setVCS(bool vcs);
 
+    bool getReadyForClearance();
     int getState();
 
+    void setdataCount(int dataCount) { this->dataCount = dataCount; };
+    void setrtsCount(int rtsCount) { this->rtsCount = rtsCount;};
+    void setSIFSCount(int SIFSCount) { this->SIFSCount = SIFSCount;};
+    void setackCount(int ackCount) { this->ackCount = ackCount;};
     
   private:
     
-    SenderCSStates currentCSState;
     SenderStates currentState;
 
     std::string ID;
 
     bool mediumBusy;
     bool ackReceived;
+    bool clearToSend;
+    bool readyForClearance;
+
+    bool vcsEnabled;
 
     int framesInBuffer;
     int backOffCount;
@@ -68,6 +69,11 @@ class Sender {
     
     int ackSlots;
     int ackCount;
+
+    int rtsSlots;
+    int rtsCount;
+
+    int ctsSlots;
 
     int dataSlots;
     int dataCount;

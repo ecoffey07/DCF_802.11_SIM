@@ -5,7 +5,6 @@
 
 
 Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int dataSlots, int cwMin, int cwMax) {
-  currentCSState = SenderCSStates::DIFS;
   currentState = SenderStates::DIFS;
 
   this->ID = ID;
@@ -13,19 +12,24 @@ Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int d
   // We subtract one because I'm too lazy to fix the code
   this->DIFSSlots = DIFSSlots - 1;
   this->SIFSSlots = SIFSSlots - 1;
-  this->ackSlots = ackSlots - 1;
   this->dataSlots = dataSlots - 1;
-
+  this->ackSlots = ackSlots - 1;
+  this->ctsSlots = ackSlots - 1;
+  this->rtsSlots = ackSlots - 1;
+  
   DIFSCount = this->DIFSSlots;
   SIFSCount = this->SIFSSlots;
-  ackCount = this->ackSlots;
   dataCount = this->dataSlots;
+  ackCount = this->ackSlots;
+  rtsCount = this->rtsSlots;
 
   contentionWindowMinSize = cwMin;
   contentionWindowMaxSize = cwMax;
   contentionWindowSize = cwMin;
 
   mediumBusy = false;
+  vcsEnabled = false;
+  readyForClearance = false;
 
   std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
   std::random_device rd;
@@ -35,26 +39,26 @@ Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int d
 
 void Sender::TickWithCS() {
 
-  switch (currentCSState) {
+  switch (currentState) {
 
-  case SenderCSStates::CONTENTION:  
+  case SenderStates::CONTENTION:  
     // Countdown from backoff counter, if backoff counter = 0, move to REQUEST_TO_SEND next tick
     break;
 
-  case SenderCSStates::REQUEST_TO_SEND:
+  case SenderStates::RTS:
     // Send RTS, 
     break;
 
-  case SenderCSStates::SEND:
+  case SenderStates::SEND:
     break;
  
-  case SenderCSStates::WAIT_FOR_ACK:
+  case SenderStates::WAIT_FOR_ACK:
     break;
 
-  case SenderCSStates::SIFS:
+  case SenderStates::SIFS:
     break;
 
-  case SenderCSStates::DIFS:
+  case SenderStates::DIFS:
 
     if (DIFSCount == 0) {
       // Repeat DIFS or Move to contention if framesInBuffer > 0
@@ -65,7 +69,7 @@ void Sender::TickWithCS() {
 
     break;
 
-  case SenderCSStates::DEFER:
+  case SenderStates::DEFER:
     break;
 
   default:
@@ -82,11 +86,20 @@ void Sender::Tick() {
     // If medium is busy, move to DEFER
     if (mediumBusy) {
       mediumBusy = false;
+      if (vcsEnabled) {
+        rtsCount = 1 + ctsSlots + 1 + 4;
+      }
       currentState = SenderStates::DEFER;
     }
     
-    if (backOffCount == 0) {
-      currentState = SenderStates::SEND;
+    if (backOffCount == 0 && !mediumBusy) {
+      if (vcsEnabled) {
+        rtsCount = rtsSlots + 1 + ctsSlots + 1;
+        currentState = SenderStates::RTS;
+      }
+      else {
+        currentState = SenderStates::SEND;
+      }
     }
     else {
       backOffCount--;
@@ -140,6 +153,38 @@ void Sender::Tick() {
       --ackCount;
     }
     break;
+  case SenderStates::RTS:
+    
+    // ReadyForClearance only used in Topography B part 2
+    if (rtsCount == 1) {
+      std::cout << ID << " READY FOR CLEARANCE" << std::endl;
+      readyForClearance = true;
+    }
+    if (rtsCount == 0) {
+      readyForClearance = false;
+      if (clearToSend) {
+        clearToSend = false;
+        currentState = SenderStates::SEND;
+      }
+      else {
+        // Collision Occured!
+        // No ack, double contention window, go back to DIFS
+        contentionWindowSize *= 2;
+        if (contentionWindowSize > contentionWindowMaxSize) {
+          contentionWindowSize = contentionWindowMaxSize;
+        }
+        std::uniform_int_distribution<int> distribution(0, contentionWindowSize - 1);
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+        backOffCount = distribution(generator);
+        currentState = SenderStates::DIFS;
+      }
+    }
+    else {
+      --rtsCount;
+    }
+
+    break;
 
   case SenderStates::SIFS:
     // Wait SIFS amount of slots, move to WAIT_FOR_ACK
@@ -168,33 +213,47 @@ void Sender::Tick() {
     if (mediumBusy) {
       dataCount = dataSlots + 1; // +1 to fix off by one error
       mediumBusy = false;
+      rtsCount = 0;
+      if (vcsEnabled) {
+        rtsCount = 1 + ctsSlots + 1 + 3;
+      }
       currentState = SenderStates::DEFER;
     }
     break;
 
   case SenderStates::DEFER:
     // Wait defer length, then wait for sifs, then wait ack length
-    if (dataCount == 0) {
-      if (SIFSCount == 0) {
-        if (ackCount == 0) {
-          dataCount = dataSlots;
-          SIFSCount = SIFSSlots;
-          ackCount = ackSlots;
-          mediumBusy = false;
-          DIFSCount = DIFSSlots;
-          currentState = SenderStates::DIFS;
+    // If carrier sensing enabled, wait SIFS x2 + CTS + the rest of it
+    
+
+    // rtsCount includes SIFS, CTS, SIFS
+    if (rtsCount == 0) {
+      if (dataCount == 0) {
+        if (SIFSCount == 0) {
+          if (ackCount == 0) {
+            dataCount = dataSlots;
+            SIFSCount = SIFSSlots;
+            ackCount = ackSlots;
+            mediumBusy = false;
+            DIFSCount = DIFSSlots;
+            currentState = SenderStates::DIFS;
+          }
+          else {
+            ackCount--;
+          }
         }
         else {
-          ackCount--;
+          SIFSCount--;
         }
       }
       else {
-        SIFSCount--;
+        dataCount--;
       }
     }
     else {
-      dataCount--;
+      --rtsCount;
     }
+
 
     break;
 
@@ -217,4 +276,16 @@ int Sender::getState() {
 
 void Sender::setMediumBusy(bool busy) {
   mediumBusy = busy;
+}
+
+void Sender::setVCS(bool vcs) {
+  vcsEnabled = vcs;
+}
+
+void Sender::setClearToSend(bool clear) {
+  clearToSend = clear;
+}
+
+bool Sender::getReadyForClearance() {
+  return readyForClearance;
 }
