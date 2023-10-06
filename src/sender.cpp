@@ -21,8 +21,8 @@ Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int d
   ackCount = this->ackSlots;
   dataCount = this->dataSlots;
 
-  cwMin = cwMin;
-  cwMax = cwMax;
+  contentionWindowMinSize = cwMin;
+  contentionWindowMaxSize = cwMax;
   contentionWindowSize = cwMin;
 
   mediumBusy = false;
@@ -120,7 +120,6 @@ void Sender::Tick() {
         std::random_device rd;
         std::default_random_engine generator(rd());
         backOffCount = distribution(generator);
-
         currentState = SenderStates::DIFS;
       }
       else {
@@ -133,7 +132,6 @@ void Sender::Tick() {
         std::random_device rd;
         std::default_random_engine generator(rd());
         backOffCount = distribution(generator);
-
         currentState = SenderStates::DIFS;
       }
       ackCount = ackSlots;
