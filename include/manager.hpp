@@ -3,7 +3,6 @@
 
 #include <iostream>
 
-#include "receiver.hpp"
 #include "sender.hpp"
 
 struct Params {
@@ -29,7 +28,6 @@ class Manager {
 
   private:
     Params simParams;
-    Receiver receiver;
     Sender* senderA;
     Sender* senderB;
 

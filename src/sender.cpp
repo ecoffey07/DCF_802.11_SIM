@@ -39,46 +39,6 @@ Sender::Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int d
   backOffCount = distribution(generator); 
 }
 
-void Sender::TickWithCS() {
-
-  switch (currentState) {
-
-  case SenderStates::CONTENTION:  
-    // Countdown from backoff counter, if backoff counter = 0, move to REQUEST_TO_SEND next tick
-    break;
-
-  case SenderStates::RTS:
-    // Send RTS, 
-    break;
-
-  case SenderStates::SEND:
-    break;
- 
-  case SenderStates::WAIT_FOR_ACK:
-    break;
-
-  case SenderStates::SIFS:
-    break;
-
-  case SenderStates::DIFS:
-
-    if (DIFSCount == 0) {
-      // Repeat DIFS or Move to contention if framesInBuffer > 0
-
-      DIFSCount = DIFSSlots;
-    }
-
-
-    break;
-
-  case SenderStates::DEFER:
-    break;
-
-  default:
-    break;
-  }
-}
-
 void Sender::Tick() {
   
   switch (currentState) {
@@ -233,36 +193,7 @@ void Sender::Tick() {
     // If carrier sensing enabled, wait SIFS x2 + CTS + the rest of it
     mediumBusy = false;
 
-    // Wait for manager to pull us out of the DEFER state
-
-    // std::cout << ID << " " << rtsCount << " " << dataCount << " " << SIFSCount << " " << ackCount << std::endl;
-    // rtsCount includes SIFS, CTS, SIFS
-    // if (rtsCount == 0) {
-    //   if (dataCount == 0) {
-    //     if (SIFSCount == 0) {
-    //       if (ackCount == 0) {
-    //         dataCount = dataSlots;
-    //         SIFSCount = SIFSSlots;
-    //         ackCount = ackSlots;
-    //         mediumBusy = false;
-    //         DIFSCount = DIFSSlots;
-    //         currentState = SenderStates::DIFS;
-    //       }
-    //       else {
-    //         ackCount--;
-    //       }
-    //     }
-    //     else {
-    //       SIFSCount--;
-    //     }
-    //   }
-    //   else {
-    //     dataCount--;
-    //   }
-    // }
-    // else {
-    //   --rtsCount;
-    // }
+    // Wait for manager to pull us from this state
     break;
 
   default:

@@ -21,10 +21,6 @@ class Sender {
   public:
     Sender(std::string ID, int DIFSSlots, int SIFSSlots, int ackSlots, int dataSlots, int cwMin, int cwMax);
 
-    /**
-     * Use Carrier Sensing
-    */
-    void TickWithCS();
     void Tick();
 
     void setMediumBusy(bool busy);

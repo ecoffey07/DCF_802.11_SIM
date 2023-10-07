@@ -652,6 +652,36 @@ void Manager::start() {
   plt::ylabel("Throughput (Kbps)");
   plt::title("Station B: Throughput vs. rate λ (frames/sec)");
 
+  plt::figure();
+  plt::plot(lambda_vector, TOP1A_Collisions, {{"label", "DCF-topology(a)"}});
+  plt::plot(lambda_vector, TOP1B_Collisions, {{"label", "DCF/VCS-topology(a)"}});
+  plt::legend("upper left");
+  plt::xlabel("λ (frames/sec)");
+  plt::ylabel("# of Collisions");
+  plt::title("Collisions at AP for Topology A");
+
+  plt::figure();
+  plt::plot(lambda_vector, TOP2A_Collisions, {{"label", "A, DCF-toplogy(b)"}});
+  plt::plot(lambda_vector, TOP2A_Collisions, {{"label", "B, DCF-toplogy(b)"}});
+  plt::plot(lambda_vector, TOP2B_Collisions, {{"label", "A, DCF/VCS-topology(b)"}});
+  plt::plot(lambda_vector, TOP2B_Collisions, {{"label", "B, DCF/VCS-topology(b)"}});
+  plt::legend();
+  plt::xlabel("λ (frames/sec)");
+  plt::ylabel("# of Collisions");
+  plt::title("Collisions at A and B for Topology B");
+
+  plt::figure();
+  plt::plot(lambda_vector, TOP1A_Fairness, {{"label", "DCF-topology(a)"}});
+  plt::plot(lambda_vector, TOP1B_Fairness, {{"label", "DCF/VCS-topology(a)"}});
+  plt::plot(lambda_vector, TOP2A_Fairness, {{"label", "DCF-topology(b)"}});
+  plt::plot(lambda_vector, TOP2B_Fairness, {{"label", "DCF/VCS-topology(b)"}});
+  plt::legend("upper left");
+  plt::xlabel("λ (frames/sec)");
+  plt::ylabel("Fairness (A attempted frames / B attempted frames)");
+  plt::title("Fairness Ratio vs. rate λ (frames/sec)");
+
+
+
   plt::show();
 }
 

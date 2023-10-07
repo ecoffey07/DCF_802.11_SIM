@@ -15,16 +15,11 @@ find_package(PythonLibs 3.8 REQUIRED COMPONENTS Interpreter Development)
 
 set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/manager.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/src/receiver.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/sender.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/src/medium.cpp
 )
 
-set(HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/receiver.hpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/include/manager.hpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/include/receiver.hpp
+set(HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/manager.hpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/include/sender.hpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/include/medium.hpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/third-party/matplotlibcpp.hpp
 )
 
