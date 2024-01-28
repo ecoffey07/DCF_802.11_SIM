@@ -1,0 +1,504 @@
+---
+title:  'Homework 3'
+subtitle: 'ISTA 421/INFO 521'
+author:
+- name: Student -  [Your name]
+  affiliation: [Your affiliation]
+- name: Instructor -  Xuan Lu
+  affiliation: School of Information, University of Arizona, Tucson, AZ
+tags: [R, RStudio, HW3]
+output: html_document
+---
+
+---------------
+
+### Objectives
+This homework sheet will help reviewing the basic concepts associated with linear regression models. Please review the lectures, suggested readings, and additional resources __before__ getting started on the HW.
+
+---------------
+
+#### Additional resources relevant to this HW
+
+- __R Markdown__: Please review the basic R Markdown cheat sheet in case you have any questions regarding formatting the HW: https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf.
+
+- __R__: Please review the basic R` cheat sheet in case you have any questions regarding the programming language: https://www.soa.org/globalassets/assets/Files/Edu/2018/exam-pa-base-r.pdf.
+
+- __RStudio__: Additional cheat sheets written by RStudio to help with specific `R` packages: https://www.rstudio.com/resources/cheatsheets/
+
+- __Datasets__: The following website has access to the relevant datasets from the recommended textbook: https://book.huihoo.com/introduction-to-statistical-learning/data.html
+
+
+#### The *Tidyverse*
+
+I encourage students to check out functions from packages included in the `tidyverse` (https://www.tidyverse.org/) which greatly facilitates the productivity of novice coders. However, all instructions will be delivered using `Base` `R`. The main textbook also uses base `R` only. I will be happy to grade your code regardless whether it uses base `R` or functions in the `tidyverse.` For some steps, other packages (such as `data.table`) are an appropriate alternative. Most if not all the questions in this HW can be answered using the tidyverse. Please check out the “accompanying” book to our main textbook that uses packages from the tidyverse instead of base (https://emilhvitfeldt.github.io/ISLR-tidymodels-labs/index.html). For this chapter, please follow the instructions in the following site: https://emilhvitfeldt.github.io/ISLR-tidymodels-labs/linear-regression.html. 
+
+
+
+### Scores
+
+Please answer the questions from the section that you’re enrolled in (labeled as either __421__ or __521__). Below is a summary of the total scores associated with this HW (non-extra credit: 2 points per question; extra credit: 5 points per question).
+
+
+- __ISTA 421__: 14 points (undergraduate)
+- __INFO 521__: 16 points (graduate)
+- __Extra credit__: 10 points (ISTA421/INFO521).
+
+
+### Submission:
+Please follow the instructions outlined below to submit your assignment. This HW is due at the next Tuesday (**11:59 pm AZ time**). Please get in touch with the TA if you’re (i) having issues opening the assignment, (2) not understanding the questions or (3) having issues submitting your assignment. Note that late submissions are subject to a penalty (see late work policies in the Syllabus).
+
+
+-**Homework 3**: Please turn in a __single RMD file (this file) AND a rendered HTML__. Answers to each question should be in the relevant block of code (see below). Re-name your file to __lastname_Hw3.RMD__ before submitting. __Make sure that you can correctly render (knit) your submission without errors before turning anything in__. If a given block of code is causing you issues and you didn’t get to fix it on time, please use `eval=FALSE` in the relevant block. If you’re using additional files to render your __RMD__, please include each of them in your submission.
+
+
+### Time commitment
+Please do reach out if you’re taking more than ~18h to complete (1) this HW, (2) reading the assigned book chapters, and (3) going over the lectures. I will be happy to provide accommodations if necessary. Do not wait until the last minute to start working on the HW. 
+
+### Looking for help?
+First, please go over the relevant readings for this week. Second, if you’re still struggling with any of the questions, do some independent research (e.g. stackoverflow is a wonderful resource). Don’t forget that your classmates will also be working on the same questions - reach out for help (check under the Discussion forum for folks looking to interact with other students in this class or start your own thread). Finally, the TA is available to answer any questions during office hours and via email.
+
+
+### Grading
+Please note that grades are **NOT exclusively based on your final answers**. We will be grading the overall structure and logic of your code. Feel free to use as many lines as you need to answer each of the questions. I also highly recommend and strongly encourage adding comments (`#`) to your code. Comments will certainly improve the reproducibility and readability of your submission. Commenting your code is also good coding practice. **Specifically for the course, you’ll get better feedback if the TA is able to understand your code in detail.**
+
+
+---------------
+
+# Questions
+
+This homework is divided into two main parts. First, a conceptual component will review the basic concepts related to linear models. The second part of the homework is mostly intended to be a brief introduction to fitting and analyzing linear models in R. Several of these questions are modified from James et al. (2021).
+
+
+## Conceptual
+
+#### Question 1 (421/521)
+
+Describe the null hypotheses to which the _p_-values given in the table (see below). Explain what conclusions you can draw based on these p-values. Your explanation should be phrased in terms of sales, TV, radio, and newspaper, rather than in terms of the coefficients of the linear model.
+
+|  | Coefficient | Std. error | t-statistics | p-value |
+|---|:---:|:---:|:---:|:---:|
+| Intercept | 2.939 | 0.3119 | 9.42 | <0.0001 |
+| TV | 0.046 | 0.0014 | 32.81 | <0.0001 |
+| Radio | 0.189 | 0.0086 | 21.89 | <0.0001 |
+| Newspaper | -0.001 | 0.0059 | -0.18 | 0.8599 |
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+#### Question 2 (421/521)
+
+Assume that you collected a dataset of 100 observations containing a single predictor and a quantitative response. Then, you decided to fit a (i) linear regression model to the data, as well as a separate (ii) cubic regression, i.e. $Y = β_{0} + β_{1}X^{1} + β_{2}X^{2} + β_{3}X^{3} + ϵ$.
+
+a) Suppose that the true relationship between $X$ and $Y$ is linear, i.e. $Y = β_{0} + β_{1}X + ϵ$. Consider the training residual sum of squares (_RSS_) for the linear regression, and also the training _RSS_ for the cubic regression. Would we expect one to be lower than the other, would we expect them to be the same, or is there not enough information to tell? Justify your answer.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+b) Answer part (a) using the test rather than training RSS.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+c) Suppose that the true relationship between $X$ and $Y$ is not linear. However, we don’t know how far it is from linear. Consider the training _RSS_ for the linear regression, and also the training _RSS_ for the cubic regression. Would we expect one to be lower than the other, would we expect them to be the same, or is there not enough information to tell? Justify your answer.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+d) Answer (c) using test rather than training _RSS._
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+#### Question 3 (421/521)
+
+a) Discuss the implications that uncertainty in $X$ would have on parameter estimates based on linear regression models. Should we care about error in $X$ when fitting OLS regressions? 
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+b) Provide a brief discussion on the concept of regression dilution.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+c) Are there any linear regression models that account for uncertainty in $X$ and $Y$? Please do some independent research and cite your sources.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+d) Distinguish between least squares and maximum likelihood in the context of linear regression models.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+## Applied
+
+Please note that some of the questions outlined below make suggestions on potential functions to be used in the answers. Feel free to use any other function. These are just a reference. For those interested in improving their skills, I would recommend going over the information in the following book for _tidyverse_ (https://emilhvitfeldt.github.io/ISLR-tidymodels-labs/linear-regression.html), using _caret_ to answer some of the questions (https://topepo.github.io/caret/), or _mikropml_ (https://cran.r-project.org/web/packages/mikropml/vignettes/introduction.html)
+
+#### Question 4
+
+This question involves the use of simple linear regression on the Auto data set.
+
+a) Use the `lm()` function to perform a simple linear regression with mpg as the response and horsepower as the predictor. Use the `summary()` function to print the results. Then, answer the questions below:
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+i. Is there a relationship between the predictor and the response?
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+ii. How strong is the relationship between the predictor and the response? Focus on the _RSE_, estimated $R^2$, and _slope._
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+iii. Is the relationship between the predictor and the response positive or negative?
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+iv. What is the predicted mpg associated with a __horsepower__ of __98__? What are the associated 95% confidence and prediction intervals?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+v. Now, please briefly explain the main use of inverse predictions. List at least two practical examples.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+vi. Finally, use `chemCal::inverse.predict` (or any function of your preference) to infer horsepower from the same mpg value predicted in (__iv__). Comment on your results.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+b) Plot the response and the predictor. Use the `abline()` function to display the least squares regression line. Feel free to use `ggplot2` by using a `geom_smooth` geometry. 
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+c) Use the `plot()` function to produce diagnostic plots of the least squares regression fit. Comment on any problems you see with the fit. Feel free to use alternatives such as `ggfortify:autoplot`.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+#### Question 5 (421/521)
+
+This question involves the use of multiple linear regression on the Auto data set. Read the dataset first (go over HW2 for details):
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+a) Produce a scatterplot matrix which includes all of the variables in the data set.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+b) Compute the matrix of correlations between the variables using the function `cor()`. You will need to exclude the name variable, which is qualitative. Also plot the corresponding correlation matrix using `corrplot::corrplot`.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+c) Use the `lm()` function to perform a multiple linear regression with mpg as the response and all other variables except name as the predictors. Use the `summary()` function to print the results. Use the questions below to comment on the output.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+i. Is there a significant association between the predictors and the response?
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+ii. Which predictors appear to have a statistically significant relationship to the response?
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+iii. What does the coefficient for the year variable suggest?
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+(d) Use the `plot()` function to produce diagnostic plots of the linear regression fit. Again, feel free to use any other package or function to create these plots. Comment on any problems you see with the fit. Do the residual plots suggest any unusually large outliers? Does the leverage plot identify any observations with unusually high leverage?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+(e) Use the `*` and `:` symbols to fit linear regression models with interaction effects. Please explore a few different models (~3–4 models). Do any interactions appear to be statistically significant in any of the models you examined? Feel free to use stepwise selection if interested (e.g. `MASS::stepAIC`, or check out some basic examples in `caret`: https://github.com/topepo/caret/blob/master/RegressionTests/Code/lmStepAIC.R). Your model exploration does not have to be extensive by any means.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+(f) Try a few different transformations of the variables, such as `log(X)`, `sqrt(X)`, $X^2$. Comment on your findings.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+#### Question 6 (421/521)
+
+In this exercise you will create some simulated data and will fit simple linear regression models to it. Make sure to use `set.seed(1)` prior to starting part (a) to ensure consistent results.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+a) Using the rnorm() function, create a vector, `x`, containing 100 observations drawn from a $N(0, 1)$ distribution. This represents a feature, `X`.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+b) Using the `rnorm()` function, create a vector, `eps`, containing 100 observations drawn from a $N(0, 0.25)$ distribution — a normal distribution with mean zero and variance `0.25`.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+c) Using `x` and `eps`, generate a vector `y` according to the model $Y = -1 + 0.5X + ϵ$. What is the length of the vector `y`? What are the values of $β_0$ and $β_1$ in this linear model?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+
+d) Create a scatterplot displaying the relationship between `x` and `y`. Comment on what you observe.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+e) Fit a least squares linear model that relates y and `x`. Comment on the model obtained. How do the estimated coefficients (slope and intercept) compare to the true values used to simulate the data?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+f) Display the least squares line on the scatterplot obtained in (d). Draw the true line on the plot, in a different color. Use the `legend()` command to create an appropriate legend. Feel free to use `ggplot2` or any other framework in R.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+g) Now fit a polynomial regression model that predicts $y$ using $x$ and $x^2$. Is there evidence that the quadratic term improves the model fit? Explain your answer.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+h) Repeat (a)–(f) after modifying the data generation process in such a way that there is less noise in the data. The model analyzed in this section,, should remain the same. You can do this by decreasing the variance of the normal distribution used to generate the error term ϵ in (b). Describe your results.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+i) Repeat (a)–(f) after modifying the data generation process in such a way that there is more noise in the data. The model analyzed in this section ($Y = -1 + 0.5X + ϵ$) should remain the same. You can do this by increasing the variance of the normal distribution used to generate the error term $ϵ$ in (b). Describe your results.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+j) What are the confidence intervals for $β_0$ and $β_1$ based on the original data set, the noisier data set, and the less noisy data set? Comment on your results.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+#### Question 7 (521)
+This question focuses on the collinearity problem.
+ 
+(a) Perform the following commands in `R`: 
+```{r}
+set.seed(1)
+x1 <- runif(100)
+x2 <- 0.5 * x1 + rnorm(100) / 10
+y <- 2 + 2 * x1 + 0.3 * x2 + rnorm(100)
+```
+
+The last line corresponds to creating a linear model in which $y$ is a function of $x_1$ and $x_2$. Write out the form of the linear model. What are the regression coefficients?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+(b) What is the correlation between $x_1$ and $x_2$? Create a scatterplot displaying the relationship between the variables.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+(c) Using this data, fit a least squares regression to predict $y$ using $x_1$ and $x_2$. Describe the results obtained. What are $β_0$, $β_1$, and $β_2$? How do these relate to the true $β_10$, $β_1$, and $β_2$? Can you reject the null hypothesis $H_0$: $β_1$ = 0? How about the null hypothesis $H_0$: $β_2$ = 0?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+(d) Now fit a least squares regression to predict $y$ using only $x_1$. Comment on your results. Can you reject the null hypothesis $H_0$: $β_1$ = 0?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+(e) Now fit a least squares regression to predict $y$ using only $x_2$. Comment on your results. Can you reject the null hypothesis $H_0$: $β_1$ = 0?
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+(f) Do the results obtained in (c)–(e) contradict each other? Explain your answer.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+(g) Now suppose we obtain one additional observation, which was unfortunately mismeasured. Re-fit the linear models from (c) to (e) using this new data. What effect does this new observation have on each of the models? In each model, is this observation an outlier? A high-leverage point? Both? Explain your answers.
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+#### Question 8 (421/521)
+
+It is claimed that in the case of simple linear regression of $Y$ onto $X$, the $R^2$ statistic is equal to the square of the correlation between $X$ and $Y$. Generate some synthetic data and show that this is the case.
+
+```{r}
+# BEGIN SOLUTION
+
+# END SOLUTION
+```
+
+
+## Extra credit
+
+
+#### Question 1
+
+Consider the fitted values that result from performing linear regression without an intercept. In this setting, the ith fitted value takes the form 
+$$
+\hat{y}_i = x_i \hat{\beta}
+$$
+Where, 
+
+$$
+\hat{\beta} = \left( \sum_{i=1}^n x_{i} y_{i} \right) / \left( \sum_{i'=1}^n x_{i'}^2 \right)
+$$
+Show that we can write
+
+$$
+\hat{y}_i = \sum_{i'=1}^n a'_i y'_i
+$$
+
+What is $a'_i$?
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+#### Question 2
+
+Given that,
+$$\hat{\beta}_1 = \dfrac{\displaystyle\sum\limits_{i=1}^{n} (x_i-\bar{x})(y_i-\bar{y}) }{\displaystyle \sum\limits_{i=1}^{n}(x_i-\bar{x})^2}\text{,}$$
+and $\hat{\beta}_0 = \bar{y}-\hat{\beta}_1\bar{x}$, argue that in the case of simple linear regression, the least squares line always passes through the point ($\bar{x}$, $\bar{y}$).
+
+> **_Answer:_**  [BEGIN SOLUTION].
+
+
+
+
+
